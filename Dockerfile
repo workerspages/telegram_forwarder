@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制源码
-COPY ./src .
+COPY ./src/telegram_to_email.py .
 
 # 复制并设置 entrypoint 脚本
 COPY entrypoint.sh /usr/local/bin/

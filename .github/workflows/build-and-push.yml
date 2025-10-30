@@ -1,40 +1,76 @@
-# 使用一个轻量的 Python 官方镜像作为基础
-FROM python:3.10-slim
+# 工作流的名称，会显示在 GitHub Actions 页面
+name: Build and Push Docker Image
 
-# 设置工作目录
-WORKDIR /app
+# 触发工作流的事件
+on:
+  # 当有代码推送到 main 分支时触发
+  push:
+    branches: [ "main" ]
+  # 允许你从 Actions 标签页手动触发此工作流
+  workflow_dispatch:
 
-# 安装系统依赖
-RUN apt-get update && \
-    apt-get install -y msmtp ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# 定义一个名为 "build-and-push" 的作业
+jobs:
+  build-and-push:
+    # 指定运行此作业的虚拟机环境
+    runs-on: ubuntu-latest
 
-# 复制 Python 依赖文件并安装
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+    # 授予 GITHUB_TOKEN 写入 ghcr.io 的权限
+    permissions:
+      contents: read
+      packages: write
 
-# 复制源码
-COPY ./src/telegram_to_email.py .
+    # 作业的步骤
+    steps:
+      # 步骤1: 检出代码
+      # 使用官方的 actions/checkout@v4 来获取你的仓库代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-# 验证 Python 文件已复制
-RUN test -f /app/telegram_to_email.py && \
-    echo "✅ telegram_to_email.py exists" || \
-    (echo "❌ telegram_to_email.py not found" && exit 1)
+      # 步骤2: 登录到 GitHub Container Registry (ghcr.io)
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # github.actor 是触发工作流的用户名
+          # secrets.GITHUB_TOKEN 是由 GitHub 自动提供的令牌
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-# 复制 entrypoint 脚本
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+      # 步骤3: 登录到 Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          # 使用我们之前在 GitHub Secrets 中存储的凭证
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-# 修复行尾符、设置权限并验证
-RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
-    echo "=== Entrypoint first line ===" && \
-    head -1 /usr/local/bin/entrypoint.sh && \
-    echo "=== Checking exec command ===" && \
-    grep -q 'exec "$@"' /usr/local/bin/entrypoint.sh && \
-    echo "✅ Entrypoint validated successfully"
+      # 步骤4: 提取 Docker 元数据 (镜像名称和标签)
+      # 这个 action 会自动生成标签，例如 'latest', git-sha, etc.
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
+            ghcr.io/${{ github.repository }}
+          # github.event.repository.name 是仓库名
+          # github.repository 是 '用户名/仓库名'
+          # ghcr.io 要求镜像名称为小写
 
-# 使用完整路径
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+      # 步骤5: 设置 Buildx 以便后续使用
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-# 设置容器启动时要执行的默认命令
-CMD ["python", "-u", "/app/telegram_to_email.py"]
+      # 步骤6: 构建镜像并推送到两个仓库
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          # 构建的上下文目录 (项目根目录)
+          context: .
+          # 推送镜像到仓库
+          push: true
+          # 使用元数据步骤生成的标签
+          tags: ${{ steps.meta.outputs.tags }}
+          # 使用元数据步骤生成的标签
+          labels: ${{ steps.meta.outputs.labels }}

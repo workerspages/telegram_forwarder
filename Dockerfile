@@ -14,6 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制源码
 COPY ./src .
 
-# 设置容器启动时要执行的命令
-# -u 参数确保日志能实时输出
+# 复制并设置 entrypoint 脚本
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+# 设置容器启动时要执行的默认命令
+# 这个命令会被传递给 entrypoint.sh
 CMD ["python", "-u", "telegram_to_email.py"]

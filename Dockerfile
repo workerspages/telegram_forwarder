@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y msmtp ca-certificates && rm -rf /var/li
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制源码
-COPY ./src/telegram_to_email.py .
+# [修正] 直接复制根目录下的 Python 脚本到当前工作目录 (/app)
+COPY telegram_to_email.py .
 
 # 复制并设置 entrypoint 脚本
 COPY entrypoint.sh /usr/local/bin/
@@ -21,5 +21,4 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # 设置容器启动时要执行的默认命令
 # 这个命令会被传递给 entrypoint.sh
-CMD ["python", "-u", "/app/telegram_to_email.py"]
-
+CMD ["python", "-u", "telegram_to_email.py"]

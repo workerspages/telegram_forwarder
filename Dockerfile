@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制源码
-COPY ./src .
+COPY ./src/ .
 
 # 复制并设置 entrypoint 脚本
 COPY entrypoint.sh /usr/local/bin/
@@ -21,4 +21,4 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # 设置容器启动时要执行的默认命令
 # 这个命令会被传递给 entrypoint.sh
-CMD ["python", "-u", "src/telegram-to-mail.py"]
+CMD ["python", "-u", "telegram-to-mail.py"]

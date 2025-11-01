@@ -21,4 +21,4 @@ ENTRYPOINT ["entrypoint.sh"]
 
 # 设置容器启动时要执行的默认命令
 # 这个命令会被传递给 entrypoint.sh
-CMD ["python", "-u", "telegram-to-mail.py"]
+CMD ["python", "-u", "src/telegram-to-mail.py"]

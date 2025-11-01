@@ -62,6 +62,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # --- ↓↓↓ 我在这里添加了新的调试步骤 ↓↓↓ ---
+      - name: 🧐 Verify Filesystem Contents
+        run: |
+          echo "Listing all files in the repository..."
+          ls -R
+          echo "-------------------------------------"
+          echo "Displaying Dockerfile contents..."
+          cat Dockerfile
+          echo "-------------------------------------"
+      # --- ↑↑↑ 添加结束 ↑↑↑ ---
+
       # 步骤6: 构建镜像并推送到两个仓库
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

@@ -85,5 +85,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           # 使用元数据步骤生成的标签
           labels: ${{ steps.meta.outputs.labels }}
-           # --- ↓↓↓ 添加这一行以禁用缓存 ↓↓↓ ---
-           no-cache: true
+          # --- ↓↓↓ 添加这一行以禁用缓存 ↓↓↓ ---
+          no-cache: true

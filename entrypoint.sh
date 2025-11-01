@@ -8,7 +8,6 @@ if [ -z "$MSMTP_HOST" ] || [ -z "$MSMTP_USER" ] || [ -z "$MSMTP_PASSWORD" ] || [
 fi
 
 # 使用环境变量动态创建 /etc/msmtprc 文件
-# cat <<EOF 是一个创建多行文本的好方法
 cat <<EOF > /etc/msmtprc
 # 此文件由 entrypoint.sh 自动生成
 defaults
@@ -19,7 +18,8 @@ logfile        /dev/stdout
 
 account        default
 host           ${MSMTP_HOST}
-port           ${MSMTP_PORT:-587} # 如果 MSMTP_PORT 未设置，则默认为 587
+# 如果 MSMTP_PORT 环境变量未设置，则默认为 587
+port           ${MSMTP_PORT:-587}
 from           ${MSMTP_FROM}
 user           ${MSMTP_USER}
 password       ${MSMTP_PASSWORD}
@@ -29,5 +29,4 @@ EOF
 chmod 600 /etc/msmtprc
 
 # 执行 Dockerfile 中 CMD 定义的命令 (即启动 Python 脚本)
-# "$@" 允许我们传递额外的参数给 python 脚本
 exec "$@"
